@@ -6,7 +6,10 @@
 2. Question: How has the demographic composition of the global ranking changed in recent years?
     - Demographics and Gender Gap Analysis
     - Motivation: To verify if the game is becoming socially more inclusive or if it remains structurally dominated by specific demographic groups.
-
+3. Question: Which nations have the highest concentration of professional players relative to their population size? 
+    - Geographycal analysis and top-player distribution
+    - Motivaion: This metric distinguishes between nations that dominate simply because they are large and smaller nations where chess is disproportionately popular and culturally ingrained
+   
 ### 2. Focusing on Subsets
 
 1. Question: What is the relationship between match frequency and title acquisition for the best players of each continent?
