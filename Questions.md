@@ -21,6 +21,9 @@
 3. Question: How does the volume of games played vary across different life stages of a Top Player? Is there a specific "intensity threshold" at some specifi age to became a champion?
     - Workload Analysis and Career Intensity
     - Motivation: To quantify the level of sacrifice and effort required in the youth phase to become a professional, distinguishing the "experience accumulation" phase from the "rating maintenance" phase.
+4. Question: How long do players maintain their highest achieved ranking?
+    - Peak Rank Retention Analysis.
+    - Motivation: To understand if reaching the summit is the hardest part, or if staying there is the true challenge.
 
 ### 3. Comparing Subsets
 
