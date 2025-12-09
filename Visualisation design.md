@@ -12,12 +12,13 @@ The two questions that i will use for the project will be:
 
 1) Question: How has the demographic composition of the global ranking changed in recent years?
 
-| Name | D   | F   | D'  | X   | Y   | Z   | T   | R   |  —  | []  | CP  |
-| :---  | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| **% number of player per Gender** | Q | | Q | P | | | | | L | | Slider |
-| **Age** | Q | | Q | | P | | | | L | | |
-| **Gender** | N | | N | | | | | C | | | |
-| **Time** | Q |  | N | | | | | C | | | |
+| Name                                 | D   | F   | D'  | X   | Y   | Z   | T   | R   |  —  | []  | CP                |
+| :---                                 | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-:               |
+| **% number of player per Gender**    | Q   |     |  Q  |  L  |     |     |     |     |     |     |                   |
+| **Gender**                           | N   |     |  N  |     |     |     |     |  C  |     |     |                   |
+| **Year**                             | Q   |  sl |  Q  |     |     |     |     |     |     |     |  slider           |
+| **Age Range**                        | O   |  sl |  O  |     |  P  |     |     |     |     |     |  slider + click   |
+
 
 
 2) Question: Is there a correlation between the average age of a nation's players and its average competitive strength?
