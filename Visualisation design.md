@@ -8,18 +8,18 @@ The two questions that i will use for the project will be:
    - Motivation: To verify if the advent of modern training methods chess engines, online databases disproportionately favors nations with a lower average age compared to those relying on traditional experience.
 
 
-## 1) Visual Mapping Specification
+## 1) Question: How has the demographic composition of the global ranking changed in recent years?
 
-Question: How has the demographic composition of the global ranking changed in recent years?
+### Visual Mapping Specification
 
 | Name                                 | D   | F   | D'  | X   | Y   | Z   | T   | R   |  —  | []  | CP                |
 | :---                                 | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-:               |
-| **% player per Gender**    | Q   |     |  Q  |  L  |     |     |     |     |     |     |                   |
+| **% player per Gender**              | Q   |     |  Q  |  L  |     |     |     |     |     |     |                   |
 | **Gender**                           | N   |     |  N  |     |     |     |     |  C  |     |     |                   |
 | **Year**                             | Q   |  sl |  Q  |     |     |     |     |     |     |     |  slider           |
 | **Age Range**                        | O   |  sl |  O  |     |  P  |     |     |     |     |     |  slider + click   |
 
-es: https://observablehq.com/@observablehq/plot-state-population-change
+similar graph: https://observablehq.com/@observablehq/plot-state-population-change
 
 ### Interactions 
 - Year slider:
@@ -45,9 +45,9 @@ es: https://observablehq.com/@observablehq/plot-state-population-change
 - The symmetry is used to facilitiating a direct comparison of the shapes of the two distributions 
 
 
-## 2) Visual Mapping Specification
+## 2) Question: Is there a correlation between the average age of a nation's players and its average competitive strength? 
 
-2) Question: Is there a correlation between the average age of a nation's players and its average competitive strength?
+### Visual Mapping Specification
 
 | Name                                 | D   | F   | D'  |  X  | Y   | Z   | T   | R   |  —  | []  | CP                |
 | :---                                 | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-:               |
@@ -58,7 +58,7 @@ es: https://observablehq.com/@observablehq/plot-state-population-change
 | **Country**                          | N   |     |  N  |     |     |     |     |     |     |     |  Text             |
 | **Region**                           | N   |     |  N  |     |     |     |     |  C  |     |     |  Legend           |
 
-es: https://observablehq.com/@observablehq/plot-wealth-health-nations
+similar graph: https://observablehq.com/@observablehq/plot-wealth-health-nations
 
 ### Interactions 
 - Year slider:
