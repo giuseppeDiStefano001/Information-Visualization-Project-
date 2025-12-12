@@ -19,14 +19,16 @@ The two questions that i will use for the project will be:
 | **Year**                             | Q   |  sl |  Q  |     |     |     |     |     |     |     |  slider           |
 | **Age Range**                        | O   |  sl |  O  |     |  P  |     |     |     |     |     |  slider + click   |
 
+es: https://observablehq.com/@observablehq/plot-state-population-change
 
 
 2) Question: Is there a correlation between the average age of a nation's players and its average competitive strength?
 
-
-| Name | D | F | D' | X | Y | Z | T | R | — | [] | CP |
-| :--- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| **% number of player per Gender** | Q | | Q | P | | | | | L | | Slider |
-| **Age** | Q | | Q | | P | | | | L | | |
-| **Gender** | N | | N | | | | | C | | | |
-| **Time** | Q | | N | | | | | C | | | |
+| Name                                 | D   | F   | D'  |  X  | Y   | Z   | T   | R   |  —  | []  | CP                |
+| :---                                 | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-:               |
+| **Rank Avg.**                        | O   |     |  O  |     |  P  |     |     |     |     |     |                   |
+| **# Player**                         | Q   |     |  Q  |     |     |     |     |  S  |     |     |                   |
+| **Year**                             | Q   |  sl |  Q  |     |     |     |     |     |     |     |  slider           |
+| **Age Avg.**                         | O   |     |     |  P  |     |     |     |     |     |     |  slider + click   |
+| **Country**                          | N   |     |  N  |     |     |     |     |     |     |     |  Text             |
+| **Region**                           | N   |     |  N  |     |     |     |     |     |     |     |  Legend           |
