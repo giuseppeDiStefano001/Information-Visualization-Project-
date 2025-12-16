@@ -44,6 +44,8 @@ similar graph: https://observablehq.com/@observablehq/plot-state-population-chan
 
 - The symmetry is used to facilitiating a direct comparison of the shapes of the two distributions 
 
+### Sketches
+![Sketches_graph_1](IMG_8361.JPEG)
 
 ## 2) Question: Is there a correlation between the average age of a nation's players and its average competitive strength? 
 
@@ -78,4 +80,7 @@ similar graph: https://observablehq.com/@observablehq/plot-wealth-health-nations
 - Nominal data: 
     - Region -> Hue : The use of colors is restricted to the mapping of the 7 continents, which is the maximum number of variables that could be mapped for bertin. 
 
-- The Proximity of bubbles indicates that they share similar charachteristics in age and strenght. 
+- The Proximity of bubbles indicates that they share similar charachteristics in age and strenght.
+
+### Sketches
+![Sketches_graph_1](IMG_8362.JPEG)
