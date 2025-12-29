@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <title>FIDE Global Chess Strength vs Age Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
+    <style>
+        /* --- STILI EREDITATI DAL TUO CODICE BASE --- */
+        body {
+            margin: 0;
+            padding: 30px 0;
+            font-family: sans-serif;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fcfcfc;
+        }
+
+        h1,
+        h2,
+        #description,
+        #controls,
+        #chart-container {
+            width: 950px;
+            /* Allargato leggermente per accomodare il grafico a bolle */
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-weight: normal;
+            color: #666;
+        }
+
+        #controls {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: grid;
+            grid-template-columns: 120px 300px 150px;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 0.9em;
+            text-align: right;
+        }
+
+        .value-display {
+            font-weight: bold;
+            text-align: left;
+            font-size: 1.1em;
+        }
+
+        /* Stile Input Ricerca personalizzato per matchare il look */
+        #search-box {
+            padding: 8px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        /* --- STILE SLIDER (DAL TUO CODICE) --- */
+        .noUi-connect {
+            background: #333;
+        }
+
+        .noUi-handle {
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #666;
+            cursor: pointer;
+            width: 18px !important;
+            height: 18px !important;
+            right: -9px !important;
+            top: -6px !important;
+            box-shadow: none;
+        }
+
+        .noUi-handle::before,
+        .noUi-handle::after {
+            display: none;
+        }
+
+        .noUi-target {
+            height: 8px;
+            border: none;
+            background: #e0e0e0;
+            box-shadow: none;
+        }
+
+        /* --- STILI SPECIFICI GRAFICO A BOLLE --- */
+        #chart-container {
+            position: relative;
+            height: 650px;
+            border: 1px solid #eee;
+            background: white;
+            overflow: hidden;
+            /* Importante per i testi background */
+        }
+
+        .country-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.04);
+            pointer-events: none;
+            z-index: 0;
+            text-transform: uppercase;
+            font-family: "Arial Black", sans-serif;
+            text-align: center;
+            width: 100%;
+        }
+
+        circle {
+            stroke: #fff;
+            stroke-width: 0.5px;
+            mix-blend-mode: multiply;
+            cursor: pointer;
+        }
+
+        .bubble-label {
+            font-size: 10px;
+            font-weight: bold;
+            pointer-events: none;
+            paint-order: stroke;
+            stroke: white;
+            stroke-width: 2.5px;
+            text-anchor: middle;
+            fill: #333;
+        }
+
+        /* Legenda Integrata */
+        #legend {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            width: 950px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #555;
+            transition: opacity 0.2s;
+        }
+
+        .legend-item.inactive {
+            opacity: 0.3;
+        }
+
+        .swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid transparent;
+        }
+
+        .swatch.active {
+            border-color: #000;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>FIDE Global Chess Strength vs Age Analysis</h1>
+    <h2>Question: Is there a correlation between the average age of a nation's players and its competitive strength?
+    </h2>
+
+    <p id="description"
+        style="text-align: justify; text-justify: inter-word; max-width: 800px; margin: 0 auto 30px auto; line-height: 1.6;">
+        <strong>Year slider:</strong><br>
+        The user drags the slider to advance the timeline. The bubbles animate to reflect the changing
+        average age (X-axis) and rating (Y-axis) of each country's top players over time.<br><br>
+
+        <strong>Search & Filter:</strong><br>
+        Use the search box to highlight specific countries. Click on the legend below to filter by continent.
+        Hovering over a bubble reveals the country name in the background for clarity.<br><br>
+
+        <strong>Visual Mapping:</strong><br>
+        <strong>X-Axis:</strong> Average Age · <strong>Y-Axis:</strong> Average ELO Rating · <strong>Size:</strong>
+        Number of Active Players
+    </p>
+
+    <div id="controls">
+        <div class="control-group">
+            <label>Search Country:</label>
+            <input type="text" id="search-box" placeholder="e.g. Italy, USA...">
+            <div></div>
+        </div>
+        <div class="control-group">
+            <label>Year:</label>
+            <div id="yearSlider"></div>
+            <div class="value-display"><span id="yearValue">2024</span></div>
+        </div>
+    </div>
+
+    <div id="legend"></div>
+
+    <div id="chart-container">
+        <div class="country-bg" id="bgLabel"></div>
+    </div>
+
+    <script>
+        const margin = { top: 40, right: 40, bottom: 50, left: 60 },
+            width = 950 - margin.left - margin.right,
+            height = 650 - margin.top - margin.bottom;
+
+        let currentRegion = null;
+        let searchQuery = "";
+
+        const svg = d3.select("#chart-container").append("svg")
+            .attr("width", 950).attr("height", 650)
+            .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const x = d3.scaleLinear().domain([18, 55]).range([0, width]);
+        const y = d3.scaleLinear().domain([1900, 2300]).range([height, 0]);
+        const r = d3.scaleSqrt().domain([1, 15000]).range([8, 90]);
+        const color = d3.scaleOrdinal().domain(["Africa", "Americas", "Asia", "Europe", "Oceania"]).range(d3.schemeTableau10);
+
+
+        svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(10));
+        svg.append("g").call(d3.axisLeft(y).ticks(5));
+
+        svg.append("text").attr("x", width).attr("y", height + 40).attr("text-anchor", "end").style("font-size", "11px").style("fill", "#666").text("Average Age →");
+        svg.append("text").attr("transform", "rotate(-90)").attr("y", -45).attr("text-anchor", "end").style("font-size", "11px").style("fill", "#666").text("↑ Average Strength (ELO)");
+
+        Promise.all([
+            d3.tsv('../data/ratings-high-elo.tsv'),
+            d3.tsv('../data/players-high-elo.tsv'),
+            d3.tsv('../data/countries.tsv'),
+            d3.tsv('../data/iso3.tsv')
+        ]).then(([resRatings, resPlayers, resCountries, resIso]) => {
+
+            const ratings = d3.group(resRatings, d => d.month.substring(0, 4), d => d.id || d['#id']);
+            const countries = d3.index(resCountries, d => d.ioc);
+            const iso = d3.index(resIso, d => d.alpha3 || d['#alpha3']);
+
+            const legend = d3.select("#legend");
+            color.domain().forEach(reg => {
+                const item = legend.append("div").attr("class", "legend-item")
+                    .on("click", function () {
+                        currentRegion = (currentRegion === reg) ? null : reg;
+                        d3.selectAll(".legend-item").classed("inactive", d => currentRegion && currentRegion !== reg);
+                        d3.selectAll(".swatch").classed("active", false);
+                        if (currentRegion) d3.select(this).select(".swatch").classed("active", true);
+                        update(Math.round(slider.noUiSlider.get()));
+                    });
+                item.append("div").attr("class", "swatch").style("background", color(reg));
+                item.append("span").text(reg);
+            });
+
+            const slider = document.getElementById('yearSlider');
+            noUiSlider.create(slider, { start: 2024, step: 1, range: { min: 2015, max: 2024 }, connect: [true, false] });
+
+            slider.noUiSlider.on('slide', v => update(Math.round(v[0])));
+
+            d3.select("#search-box").on("input", function () {
+                searchQuery = this.value.toLowerCase();
+                update(Math.round(slider.noUiSlider.get()));
+            });
+
+            function update(year) {
+                d3.select("#yearValue").text(year);
+                const yearRatings = ratings.get(String(year));
+
+                const data = d3.groups(resPlayers, d => d.fed).map(([fed, members]) => {
+                    const c = countries.get(fed);
+                    if (!c) return null;
+                    const reg = iso.get(c.alpha3)?.region || "Other";
+
+                    const validMembers = members.filter(m => {
+                        const age = year - (+m.birthyear);
+                        return m.birthyear > 0 && age >= 5 && age <= 95;
+                    });
+
+                    const active = validMembers.map(m => {
+                        const rList = yearRatings?.get(m.id || m['#id']);
+                        return rList ? +rList[rList.length - 1].rating : null;
+                    }).filter(v => v);
+
+                    if (active.length < 15) return null;
+                    const ratingAvg = d3.mean(active);
+                    if (ratingAvg < 1900 || ratingAvg > 2300) return null;
+
+                    return {
+                        country: c['#country'] || c.name,
+                        region: reg,
+                        age: d3.mean(validMembers, m => year - (+m.birthyear)),
+                        rating: ratingAvg,
+                        pop: active.length
+                    };
+                }).filter(d => d);
+
+                const groups = svg.selectAll(".node").data(data, d => d.country);
+                groups.exit().remove();
+
+                const enter = groups.enter().append("g").attr("class", "node");
+                enter.append("circle");
+                enter.append("text").attr("class", "bubble-label");
+
+                const all = enter.merge(groups);
+
+                all.select("circle")
+                    .transition().duration(400)
+                    .attr("cx", d => x(d.age)).attr("cy", d => y(d.rating)).attr("r", d => r(d.pop))
+                    .attr("fill", d => color(d.region))
+                    .style("fill-opacity", d => {
+                        if (searchQuery || currentRegion) {
+                            const matchesSearch = searchQuery === "" || d.country.toLowerCase().includes(searchQuery);
+                            const matchesRegion = currentRegion === null || d.region === currentRegion;
+                            return (matchesSearch && matchesRegion) ? 0.85 : 0.05;
+                        }
+                        return 0.6;
+                    });
+
+
+                all.select("text")
+                    .transition().duration(400)
+                    .attr("x", d => x(d.age)).attr("y", d => y(d.rating))
+                    .text(d => {
+                        const isSearchMatch = searchQuery && d.country.toLowerCase().includes(searchQuery);
+                        if (currentRegion && d.region === currentRegion) return d.country; // Regione attiva mostra tutto
+                        const isTopNation = d.pop > 800;
+                        return (isSearchMatch || isTopNation) ? d.country : "";
+                    })
+                    .style("fill-opacity", d => {
+                        if (searchQuery || currentRegion) {
+                            const matchesSearch = searchQuery === "" || d.country.toLowerCase().includes(searchQuery);
+                            const matchesRegion = currentRegion === null || d.region === currentRegion;
+                            return (matchesSearch && matchesRegion) ? 1 : 0;
+                        }
+                        return 1;
+                    });
+
+                all.on("mouseenter", (e, d) => {
+                    const group = d3.select(e.currentTarget);
+                    group.raise();
+
+                    group.select("circle")
+                        .style("fill-opacity", 1)
+                        .style("stroke", "#000")
+                        .style("stroke-width", "1.5px");
+
+                    group.select("text")
+                        .text(d.country)
+                        .style("fill-opacity", 1);
+
+                    d3.select("#bgLabel").text(d.country);
+
+                }).on("mouseleave", (e, d) => {
+                    d3.select("#bgLabel").text("");
+                    const group = d3.select(e.currentTarget);
+
+                    const matchesSearch = searchQuery === "" || d.country.toLowerCase().includes(searchQuery);
+                    const matchesRegion = currentRegion === null || d.region === currentRegion;
+                    const targetOpacity = (searchQuery || currentRegion) ? ((matchesSearch && matchesRegion) ? 0.85 : 0.05) : 0.6;
+
+                    group.select("circle")
+                        .style("fill-opacity", targetOpacity)
+                        .style("stroke", "#fff")
+                        .style("stroke-width", "0.5px");
+                    const isSearchMatch = searchQuery && d.country.toLowerCase().includes(searchQuery);
+                    const isRegionMatch = currentRegion && d.region === currentRegion;
+                    const isTopNation = d.pop > 800;
+                    const shouldShow = isSearchMatch || (currentRegion ? isRegionMatch : isTopNation);
+
+                    group.select("text")
+                        .text(shouldShow ? d.country : "")
+                        .style("fill-opacity", (matchesSearch && matchesRegion) ? 1 : 0);
+                });
+            }
+            update(2024);
+        });
+    </script>
+</body>
+
+</html>

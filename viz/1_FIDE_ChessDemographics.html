@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset='utf-8'>
+	<title>FIDE Chess Demographics analysis</title>
+	<link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css" rel="stylesheet">
+	<style>
+		body {
+			margin: 0;
+			padding: 30px 0;
+			font-family: sans-serif;
+			color: #333;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		h1,
+		h2,
+		#description,
+		#controls,
+		#chart {
+			width: 850px;
+			text-align: center;
+		}
+
+		h2 {
+			margin-bottom: 20px;
+			font-weight: normal;
+			color: #666;
+		}
+
+
+		#controls {
+			background: #f9f9f9;
+			padding: 30px;
+			border-radius: 4px;
+			border: 1px solid #ccc;
+			display: flex;
+			flex-direction: column;
+			gap: 30px;
+			box-sizing: border-box;
+		}
+
+		.control-group {
+			display: grid;
+			grid-template-columns: 120px 300px 150px 80px;
+			align-items: center;
+			justify-content: center;
+			gap: 20px;
+		}
+
+		label {
+			font-weight: bold;
+			font-size: 0.9em;
+			text-align: right;
+		}
+
+		.value-display {
+			font-weight: bold;
+			text-align: left;
+		}
+
+
+		.noUi-connect {
+			background: #333;
+		}
+
+		.noUi-handle {
+			border-radius: 50%;
+			background: #fff;
+			border: 2px solid #666;
+			cursor: pointer;
+			width: 18px !important;
+			height: 18px !important;
+			right: -9px !important;
+			top: -6px !important;
+			box-shadow: none;
+		}
+
+		.noUi-handle::before,
+		.noUi-handle::after {
+			display: none;
+		}
+
+		.noUi-target {
+			height: 8px;
+			border: none;
+			background: #e0e0e0;
+			box-shadow: none;
+		}
+
+		#chart svg {
+			display: block;
+			margin: 0 auto;
+		}
+
+		.bar {
+			fill-opacity: 0.8;
+			cursor: pointer;
+		}
+
+		.bar:hover {
+			fill-opacity: 1;
+			stroke: #000;
+			stroke-width: 1px;
+		}
+
+		.axis-label {
+			font-size: 13px;
+			font-weight: bold;
+		}
+
+		.tick text {
+			font-size: 11px;
+			fill: #666;
+		}
+
+		.zero-line {
+			stroke: #333;
+			stroke-width: 1.5px;
+		}
+
+		.bar-label {
+			font-size: 10px;
+			font-weight: bold;
+			pointer-events: none;
+		}
+	</style>
+</head>
+
+<body>
+
+	<h1>FIDE Chess Demographics analysis</h1>
+	<h2>Question: How has the demographic composition of the global
+		ranking changed in recent years?</h2>
+
+	<p
+		style="text-align: justify; text-justify: inter-word; max-width: 800px; margin: 0 auto; line-height: 1.6; font-family: sans-serif; color: #333;">
+		<strong>Year slider:</strong><br>
+		The user drags the slider to advance the timeline from one year to the other.
+		The bars will smoothly extend or retract their length to reflect the changing percentage of
+		players per gender over the years.<br><br>
+
+		<strong>Age range slider:</strong><br>
+		A two-sided slider which the user can use to show only the interval of ages wanted (e.g., 30-50).
+		There will be a zoom-in or zoom-out on the selected age interval of the chess players.<br><br>
+
+		<strong>Age range click:</strong><br>
+		If one of the age ranges on the Y-axis is selected, there will be a zoom-in on that range.
+		The Y-axis will show the range selected by the previous click, revealing the granular
+		distribution for individual years within that range.
+	</p>
+
+	<div id="controls">
+		<div class="control-group">
+			<label>Year:</label>
+			<div id="yearSlider"></div>
+			<div class="value-display"><span id="yearValue">2024</span></div>
+			<div></div>
+		</div>
+		<div class="control-group">
+			<label>Age Range:</label>
+			<div id="ageSlider"></div>
+			<div class="value-display"><span id="ageValue">6 - 100</span> yrs</div>
+			<button id="resetBtn"
+				style="cursor:pointer; padding: 4px; border: 1px solid #999; background: #eee; border-radius: 3px;">Reset</button>
+		</div>
+	</div>
+
+	<div id="chart"></div>
+
+	<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+	<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
+	<script>
+
+		var totalWidth = 850;
+		var margin = { top: 70, right: 60, bottom: 40, left: 100 },
+			width = totalWidth - margin.left - margin.right,
+			height = 500 - margin.top - margin.bottom;
+
+		var x = d3.scaleLinear().range([0, width]);
+		var y = d3.scaleBand().range([0, height]).padding(0.1);
+
+		var svg = d3.select("#chart").append("svg")
+			.attr("width", totalWidth)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", `translate(${margin.left},${margin.top})`);
+
+		function getMacroRange(age) {
+			if (age < 18) return "<18";
+			if (age <= 35) return "18-35";
+			if (age <= 50) return "35-50";
+			return "50+";
+		}
+
+		d3.tsv('../data/players.tsv', d => ({
+			sex: d.sex ? d.sex.trim().toUpperCase() : "U",
+			birthyear: +d.birthyear
+		})).then(function (players) {
+
+			var yearSlider = document.getElementById('yearSlider');
+			var ageSlider = document.getElementById('ageSlider');
+
+			noUiSlider.create(yearSlider, { start: 2024, step: 1, connect: [true, false], range: { 'min': 2015, 'max': 2024 } });
+			noUiSlider.create(ageSlider, { start: [6, 100], step: 1, connect: true, range: { 'min': 6, 'max': 100 } });
+
+			function update() {
+				var year = parseInt(yearSlider.noUiSlider.get());
+				var ageRange = ageSlider.noUiSlider.get().map(Number);
+
+				d3.select("#yearValue").text(year);
+				d3.select("#ageValue").text(`${ageRange[0]} - ${ageRange[1]}`);
+
+				var isMacro = (ageRange[1] - ageRange[0]) > 25;
+				var filtered = players.map(d => ({ ...d, age: year - d.birthyear }))
+					.filter(d => d.age >= ageRange[0] && d.age <= ageRange[1]);
+
+				var groupFn = isMacro ? d => getMacroRange(d.age) : d => d.age;
+				var counts = d3.rollup(filtered, v => v.length, groupFn, d => d.sex);
+				var processed = [];
+				var yDomain = isMacro ? ["<18", "18-35", "35-50", "50+"] : d3.range(ageRange[0], ageRange[1] + 1);
+
+				counts.forEach((sexes, label) => {
+					var tot = d3.sum(sexes.values());
+					sexes.forEach((count, sex) => {
+						processed.push({ label: label, sex: sex, value: sex === "F" ? -count / tot : count / tot });
+					});
+				});
+
+				if (!isMacro) processed.sort((a, b) => d3.ascending(a.label, b.label));
+				render(processed, yDomain, isMacro);
+			}
+
+			function render(data, yDomain, isMacro) {
+				x.domain([-1, 1]);
+				y.domain(yDomain);
+
+				var currentHeight = isMacro ? 400 : Math.max(400, yDomain.length * 20);
+				d3.select("#chart svg").attr("height", currentHeight + margin.top + margin.bottom);
+				y.range([0, currentHeight]);
+
+				svg.selectAll("*").remove();
+
+				svg.append("g").attr("class", "x-axis").call(d3.axisTop(x).ticks(10).tickFormat(d => d3.format(".0%")(Math.abs(d))));
+				svg.append("g").attr("class", "y-axis").call(d3.axisLeft(y));
+				svg.append("line").attr("class", "zero-line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 0).attr("y2", currentHeight);
+				svg.append("text").attr("class", "axis-label").attr("text-anchor", "middle").attr("x", x(0)).attr("y", -45).text("← Female (%) · Gender Distribution · Male (%) →");
+
+				svg.selectAll(".bar")
+					.data(data)
+					.enter().append("rect")
+					.attr("class", "bar")
+					.attr("x", d => x(Math.min(0, d.value)))
+					.attr("y", d => y(d.label))
+					.attr("width", d => Math.abs(x(d.value) - x(0)))
+					.attr("height", y.bandwidth())
+					.attr("fill", d => d.sex === "F" ? "#e41a1c" : "#377eb8")
+					.on("click", (e, d) => {
+						if (!isMacro) return;
+						if (d.label === "<18") ageSlider.noUiSlider.set([6, 17]);
+						else if (d.label === "18-35") ageSlider.noUiSlider.set([18, 35]);
+						else if (d.label === "35-50") ageSlider.noUiSlider.set([35, 50]);
+						else if (d.label === "50+") ageSlider.noUiSlider.set([51, 100]);
+					});
+
+				if (isMacro || yDomain.length < 35) {
+					svg.selectAll(".bar-label")
+						.data(data)
+						.enter().append("text")
+						.attr("class", "bar-label")
+						.attr("x", d => d.value < 0 ? x(d.value) - 5 : x(d.value) + 5)
+						.attr("y", d => y(d.label) + y.bandwidth() / 2 + 4)
+						.attr("text-anchor", d => d.value < 0 ? "end" : "start")
+						.text(d => d3.format(".1%")(Math.abs(d.value)));
+				}
+			}
+
+			yearSlider.noUiSlider.on('update', update);
+			ageSlider.noUiSlider.on('update', update);
+			d3.select("#resetBtn").on("click", () => { ageSlider.noUiSlider.set([6, 100]); yearSlider.noUiSlider.set(2024); });
+		});
+	</script>
+</body>
+
+</html>
