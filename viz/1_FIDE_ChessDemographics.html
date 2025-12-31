@@ -31,7 +31,6 @@
 			color: #666;
 		}
 
-
 		#controls {
 			background: #f9f9f9;
 			padding: 30px;
@@ -61,7 +60,6 @@
 			font-weight: bold;
 			text-align: left;
 		}
-
 
 		.noUi-connect {
 			background: #333;
@@ -133,8 +131,7 @@
 <body>
 
 	<h1>FIDE Chess Demographics analysis</h1>
-	<h2>Question: How has the demographic composition of the global
-		ranking changed in recent years?</h2>
+	<h2>Question: How has the demographic composition of the global ranking changed in recent years?</h2>
 
 	<p
 		style="text-align: justify; text-justify: inter-word; max-width: 800px; margin: 0 auto; line-height: 1.6; font-family: sans-serif; color: #333;">
@@ -193,13 +190,16 @@
 			if (age < 18) return "<18";
 			if (age <= 35) return "18-35";
 			if (age <= 50) return "35-50";
-			return "50+";
+			if (age <= 65) return "50-65";
+			return "65+";
 		}
 
-		d3.tsv('../data/players.tsv', d => ({
-			sex: d.sex ? d.sex.trim().toUpperCase() : "U",
-			birthyear: +d.birthyear
-		})).then(function (players) {
+		d3.tsv('../data/players.tsv', function (d) {
+			return {
+				sex: d.sex ? d.sex.trim().toUpperCase() : "U",
+				birthyear: +d.birthyear
+			};
+		}).then(function (players) {
 
 			var yearSlider = document.getElementById('yearSlider');
 			var ageSlider = document.getElementById('ageSlider');
@@ -215,22 +215,57 @@
 				d3.select("#ageValue").text(`${ageRange[0]} - ${ageRange[1]}`);
 
 				var isMacro = (ageRange[1] - ageRange[0]) > 25;
-				var filtered = players.map(d => ({ ...d, age: year - d.birthyear }))
-					.filter(d => d.age >= ageRange[0] && d.age <= ageRange[1]);
 
-				var groupFn = isMacro ? d => getMacroRange(d.age) : d => d.age;
-				var counts = d3.rollup(filtered, v => v.length, groupFn, d => d.sex);
+				var filtered = players.map(function (d) {
+					return { ...d, age: year - d.birthyear };
+				}).filter(function (d) {
+					return d.age >= ageRange[0] && d.age <= ageRange[1];
+				});
+
+				var groupFn;
+				if (isMacro) {
+					groupFn = function (d) { return getMacroRange(d.age); };
+				} else {
+					groupFn = function (d) { return d.age; };
+				}
+
+				var counts = d3.rollup(filtered, function (v) { return v.length; }, groupFn, function (d) { return d.sex; });
 				var processed = [];
-				var yDomain = isMacro ? ["<18", "18-35", "35-50", "50+"] : d3.range(ageRange[0], ageRange[1] + 1);
+				var yDomain;
 
-				counts.forEach((sexes, label) => {
-					var tot = d3.sum(sexes.values());
-					sexes.forEach((count, sex) => {
-						processed.push({ label: label, sex: sex, value: sex === "F" ? -count / tot : count / tot });
+				if (isMacro) {
+					yDomain = ["<18", "18-35", "35-50", "50-65", "65+"];
+				} else {
+					yDomain = d3.range(ageRange[0], ageRange[1] + 1);
+				}
+
+				counts.forEach(function (mappaSessi, etichettaGruppo) {
+					var totaleGiocatoriNelGruppo = d3.sum(mappaSessi.values());
+
+					mappaSessi.forEach(function (numeroGiocatori, sesso) {
+						var valoreFinale;
+						var percentuale = numeroGiocatori / totaleGiocatoriNelGruppo;
+
+						if (sesso === "F") {
+							valoreFinale = -percentuale;
+						} else {
+							valoreFinale = percentuale;
+						}
+
+						processed.push({
+							label: etichettaGruppo,
+							sex: sesso,
+							value: valoreFinale
+						});
 					});
 				});
 
-				if (!isMacro) processed.sort((a, b) => d3.ascending(a.label, b.label));
+				if (!isMacro) {
+					processed.sort(function (a, b) {
+						return d3.ascending(a.label, b.label);
+					});
+				}
+
 				render(processed, yDomain, isMacro);
 			}
 
@@ -244,43 +279,100 @@
 
 				svg.selectAll("*").remove();
 
-				svg.append("g").attr("class", "x-axis").call(d3.axisTop(x).ticks(10).tickFormat(d => d3.format(".0%")(Math.abs(d))));
-				svg.append("g").attr("class", "y-axis").call(d3.axisLeft(y));
-				svg.append("line").attr("class", "zero-line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", 0).attr("y2", currentHeight);
-				svg.append("text").attr("class", "axis-label").attr("text-anchor", "middle").attr("x", x(0)).attr("y", -45).text("← Female (%) · Gender Distribution · Male (%) →");
+				svg.append("g")
+					.attr("class", "x-axis")
+					.call(d3.axisTop(x)
+						.ticks(10)
+						.tickFormat(function (d) {
+							return d3.format(".0%")(Math.abs(d));
+						})
+					);
+
+				svg.append("g")
+					.attr("class", "y-axis")
+					.call(d3.axisLeft(y));
+
+
+				svg.append("line")
+					.attr("class", "zero-line")
+					.attr("x1", x(0))
+					.attr("x2", x(0))
+					.attr("y1", 0)
+					.attr("y2", currentHeight);
+
+				svg.append("text")
+					.attr("class", "axis-label")
+					.attr("text-anchor", "middle")
+					.attr("x", x(0))
+					.attr("y", -45)
+					.text("<- Female (%) - Gender Distribution - Male (%) ->");
+
 
 				svg.selectAll(".bar")
 					.data(data)
-					.enter().append("rect")
+					.enter()
+					.append("rect")
 					.attr("class", "bar")
-					.attr("x", d => x(Math.min(0, d.value)))
-					.attr("y", d => y(d.label))
-					.attr("width", d => Math.abs(x(d.value) - x(0)))
+
+					.attr("x", function (d) {
+						return x(Math.min(0, d.value));
+					})
+
+					.attr("y", function (d) {
+						return y(d.label);
+					})
+
+					.attr("width", function (d) {
+						return Math.abs(x(d.value) - x(0));
+					})
+
 					.attr("height", y.bandwidth())
-					.attr("fill", d => d.sex === "F" ? "#e41a1c" : "#377eb8")
-					.on("click", (e, d) => {
-						if (!isMacro) return;
-						if (d.label === "<18") ageSlider.noUiSlider.set([6, 17]);
-						else if (d.label === "18-35") ageSlider.noUiSlider.set([18, 35]);
-						else if (d.label === "35-50") ageSlider.noUiSlider.set([35, 50]);
-						else if (d.label === "50+") ageSlider.noUiSlider.set([51, 100]);
-					});
+
+					.attr("fill", function (d) {
+						if (d.sex === "F") {
+							return "#e41a1c";
+						} else {
+							return "#377eb8";
+						}
+					})
+
 
 				if (isMacro || yDomain.length < 35) {
 					svg.selectAll(".bar-label")
 						.data(data)
-						.enter().append("text")
+						.enter()
+						.append("text")
 						.attr("class", "bar-label")
-						.attr("x", d => d.value < 0 ? x(d.value) - 5 : x(d.value) + 5)
-						.attr("y", d => y(d.label) + y.bandwidth() / 2 + 4)
-						.attr("text-anchor", d => d.value < 0 ? "end" : "start")
-						.text(d => d3.format(".1%")(Math.abs(d.value)));
+
+						.attr("x", function (d) {
+							if (d.value < 0) {
+								return x(d.value) - 5;
+							}
+							else {
+								return x(d.value) + 5;
+							}
+						})
+
+						.attr("y", function (d) {
+							return y(d.label) + y.bandwidth() / 2 + 4;
+						})
+
+						.attr("text-anchor", function (d) {
+							return d.value < 0 ? "end" : "start";
+						})
+
+						.text(function (d) {
+							return d3.format(".1%")(Math.abs(d.value));
+						});
 				}
 			}
 
 			yearSlider.noUiSlider.on('update', update);
 			ageSlider.noUiSlider.on('update', update);
-			d3.select("#resetBtn").on("click", () => { ageSlider.noUiSlider.set([6, 100]); yearSlider.noUiSlider.set(2024); });
+			d3.select("#resetBtn").on("click", function () {
+				ageSlider.noUiSlider.set([6, 100]);
+				yearSlider.noUiSlider.set(2024);
+			});
 		});
 	</script>
 </body>
