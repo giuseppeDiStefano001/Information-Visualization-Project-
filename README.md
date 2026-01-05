@@ -40,7 +40,7 @@ The code is configured to load data from a sibling folder named `data` (using th
 ```
 ## How to run the visualisations
 1. Open your terminal or command prompt.
-2. Navigate to the root folder of the project (e.g., /my-chess-project).
+2. Navigate to the root folder of the project
 3. Run the following command:
     ```text
     Bash
