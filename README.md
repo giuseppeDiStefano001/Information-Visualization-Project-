@@ -1,46 +1,55 @@
-# Information Visualization Project Report
+# FIDE Chess Data Visualizations
 
-## 1. Visualizations Overview
+This project contains two interactive data visualizations based on FIDE chess player datasets. It analyzes the demographic evolution of players and the correlation between a nation's average player age and competitive strength.
 
-### Visualization 1: Chess Demographics Analysis
-**Goal:** Answer the question *"How has the demographic composition of the global ranking changed in recent years?"*
+## Visualizations Included
 
-* **Design:** We implemented a **Bi-directional Bar Chart (Population Pyramid)**. This structure immediately highlights the gender imbalance in chess, with females on the left (red) and males on the right (blue).
-* **Interactivity:**
-    * **Time Slider:** Allows users to observe the evolution of demographics from 2015 to 2024.
-    * **Age Zoom:** A dual-handle slider allows filtering specific age ranges (e.g., juniors vs. veterans).
-    * **Macro/Micro View:** Clicking on a macro category (e.g., "<18") zooms into the individual years, providing a granular view of that specific generation.
+1.  **`1_FIDE_ChessDemographics.html`**
+    * **Type:** Population Pyramid and Bar Chart.
+    * **Description:** Visualizes the gender distribution across different age groups over the last decade.
+    * **Features:** Interactive year slider, age range filtering (zoom), and gender split calculation.
 
-### Visualization 2: Global Chess Strength vs. Age
-**Goal:** Answer the question *"Is there a correlation between the average age of a nation's players and its competitive strength?"*
+2.  **`2_FIDE_GenerationalClash.html`**
+    * **Type:** Bubble Chart (Scatter Plot).
+    * **Description:** Explores the relationship between a country's average player age and their average ELO rating.
+    * **Features:** Time-lapse animation (2015-2024), region filtering, search functionality, and tooltip details.
 
-* **Design:** A **Bubble Chart** where:
-    * **X-Axis:** Average Age of the country's top players.
-    * **Y-Axis:** Average ELO Rating (Strength).
-    * **Bubble Size:** Number of active players (Population).
-    * **Color:** Region/Continent.
-* **Interactivity:**
-    * **Animation:** Dragging the year slider animates the bubbles, showing the "rise and fall" of nations over time.
-    * **Smart Filtering:** To manage visual clutter (over 100 nations), we implemented an **Interactive Legend** (click to filter by continent) and a **Search Bar** (to find specific countries).
-    * **Context on Demand:** Hovering over a bubble highlights it and displays the country name in the background, keeping the view clean.
----
+## Dependencies
 
-## 2. Evolution from Initial Design
+This project relies on the following external libraries:
+* **[D3.js (v7)](https://d3js.org/)**: Used for data manipulation, SVG rendering, and axis generation.
+* **[noUiSlider (v15.7.1)](https://refreshless.com/nouislider/)**: Used for the interactive year and age range sliders.
 
-The final implementation evolved significantly from the initial sketches to address technical challenges (cluttering) and improve user experience.
+## Project Structure
 
-### A. Handling Visual Clutter (Viz 2)
-* **Initial Design:** A static scatterplot showing all nations.
-* **Problem:** With ~150 nations, the chart was unreadable; labels overlapped, and small nations were indistinguishable.
-* **Final Solution:**
-    1.  **Data Filtering:** We excluded nations with fewer than 15 active players or extreme rating outliers (<1900 ELO) to focus on statistically significant data.
-    2.  **Smart Labels:** Labels are hidden by default for small nations and only appear upon **Hover** or **Search**.
-    3.  **Search Functionality:** We added a search box that highlights the queried country and fades out the rest, allowing targeted analysis.
+The code is configured to load data from a sibling folder named `data` (using the path `../data/filename.tsv`). Please ensure your folder structure looks exactly like this:
 
-### B. Navigation & Exploration
-* **Initial Design:** Simple static charts for different years.
-* **Final Solution:** We integrated **noUiSlider** to create a fluid timeline. This transforms the analysis from a static comparison to a dynamic story, allowing the user to see trends (e.g., the aging of a specific national team) unfold organically.
+```text
+/my-chess-project
+│
+├── data/                      # Folder containing TSV datasets
+│   ├── players.tsv
+│   ├── players-high-elo.tsv
+│   ├── ratings-high-elo.tsv
+│   ├── countries.tsv
+│   └── iso3.tsv
+│
+└── viz/                       # Folder containing your HTML files
+    ├── 1_FIDE_ChessDemographics.html
+    └── 2_FIDE_GenerationalClash.html
+```
+## How to run the visualisations
+1. Open your terminal or command prompt.
+2. Navigate to the root folder of the project (e.g., /my-chess-project).
+3. Run the following command:
+    ```text
+    Bash
+     # For Python 3
+     python -m http.server 8000
+    ```
+4. Open your web browser and go to:
+     ```text
+    http://localhost:8000/visualizations/1_FIDE_ChessDemographics.html
 
-### C. Data Optimization
-* **Challenge:** The original dataset was over 100MB, causing slow loading times and browser crashes.
-* **Solution:** We pre-processed the data (Python script), filtering out inactive players and low-rated games. This reduced the file size by ~80%, ensuring smooth animations and fast loading times without sacrificing the quality of the analysis for top-tier chess.
+    http://localhost:8000/visualizations/2_FIDE_GenerationalClash.html
+     ```

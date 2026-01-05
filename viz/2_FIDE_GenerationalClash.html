@@ -4,11 +4,12 @@
 <head>
     <meta charset='utf-8'>
     <title>FIDE Global Chess Strength vs Age Analysis</title>
+
     <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
+
     <style>
-        /* --- STILI EREDITATI DAL TUO CODICE BASE --- */
         body {
             margin: 0;
             padding: 30px 0;
@@ -24,9 +25,9 @@
         h2,
         #description,
         #controls,
-        #chart-container {
+        #chart-container,
+        #legend {
             width: 950px;
-            /* Allargato leggermente per accomodare il grafico a bolle */
             text-align: center;
         }
 
@@ -68,7 +69,6 @@
             font-size: 1.1em;
         }
 
-        /* Stile Input Ricerca personalizzato per matchare il look */
         #search-box {
             padding: 8px;
             width: 100%;
@@ -78,7 +78,6 @@
             box-sizing: border-box;
         }
 
-        /* --- STILE SLIDER (DAL TUO CODICE) --- */
         .noUi-connect {
             background: #333;
         }
@@ -107,14 +106,12 @@
             box-shadow: none;
         }
 
-        /* --- STILI SPECIFICI GRAFICO A BOLLE --- */
         #chart-container {
             position: relative;
             height: 650px;
             border: 1px solid #eee;
             background: white;
             overflow: hidden;
-            /* Importante per i testi background */
         }
 
         .country-bg {
@@ -133,31 +130,11 @@
             width: 100%;
         }
 
-        circle {
-            stroke: #fff;
-            stroke-width: 0.5px;
-            mix-blend-mode: multiply;
-            cursor: pointer;
-        }
-
-        .bubble-label {
-            font-size: 10px;
-            font-weight: bold;
-            pointer-events: none;
-            paint-order: stroke;
-            stroke: white;
-            stroke-width: 2.5px;
-            text-anchor: middle;
-            fill: #333;
-        }
-
-        /* Legenda Integrata */
         #legend {
             display: flex;
             gap: 15px;
             justify-content: center;
             margin-bottom: 20px;
-            width: 950px;
             flex-wrap: wrap;
         }
 
@@ -188,28 +165,51 @@
             box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
             transform: scale(1.2);
         }
+
+        circle {
+            stroke: #fff;
+            stroke-width: 0.5px;
+            mix-blend-mode: multiply;
+            cursor: pointer;
+        }
+
+        .bubble-label {
+            font-size: 10px;
+            font-weight: bold;
+            pointer-events: none;
+            paint-order: stroke;
+            stroke: white;
+            stroke-width: 2.5px;
+            text-anchor: middle;
+            fill: #333;
+        }
     </style>
 </head>
 
 <body>
 
     <h1>FIDE Global Chess Strength vs Age Analysis</h1>
-    <h2>Question: Is there a correlation between the average age of a nation's players and its competitive strength?
+    <h2>Question: Is there a correlation between the average age of a nation's
+        players and its average competitive strength?
     </h2>
 
     <p id="description"
         style="text-align: justify; text-justify: inter-word; max-width: 800px; margin: 0 auto 30px auto; line-height: 1.6;">
-        <strong>Year slider:</strong><br>
-        The user drags the slider to advance the timeline. The bubbles animate to reflect the changing
-        average age (X-axis) and rating (Y-axis) of each country's top players over time.<br><br>
+        <strong>Year Slider:</strong><br>
+        The user drags the slider to change the displayed year. The bubbles animate, interpolating their position and
+        size to reflect the data of the selected year.<br><br>
 
-        <strong>Search & Filter:</strong><br>
-        Use the search box to highlight specific countries. Click on the legend below to filter by continent.
-        Hovering over a bubble reveals the country name in the background for clarity.<br><br>
+        <strong>Region Filter:</strong><br>
+        Click on a region in the legend to filter the view. All bubbles belonging to the selected region remain
+        highlighted, while others become semi-transparent.<br><br>
 
-        <strong>Visual Mapping:</strong><br>
-        <strong>X-Axis:</strong> Average Age · <strong>Y-Axis:</strong> Average ELO Rating · <strong>Size:</strong>
-        Number of Active Players
+        <strong>Hover Interaction:</strong><br>
+        Hover over a specific bubble to view details. The country name appears in the background to clearly identify the
+        highlighted data.<br><br>
+
+        <strong>Search Country:</strong><br>
+        Enter a country name to highlight it immediately. Non-matching bubbles fade into the background, allowing you to
+        focus on a specific nation.<br><br>
     </p>
 
     <div id="controls">
@@ -232,28 +232,59 @@
     </div>
 
     <script>
-        const margin = { top: 40, right: 40, bottom: 50, left: 60 },
-            width = 950 - margin.left - margin.right,
-            height = 650 - margin.top - margin.bottom;
+        const margin = { top: 40, right: 40, bottom: 50, left: 60 };
+        const width = 950 - margin.left - margin.right;
+        const height = 650 - margin.top - margin.bottom;
 
         let currentRegion = null;
         let searchQuery = "";
 
-        const svg = d3.select("#chart-container").append("svg")
-            .attr("width", 950).attr("height", 650)
-            .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+        const svg = d3.select("#chart-container")
+            .append("svg")
+            .attr("width", 950)
+            .attr("height", 650)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        const x = d3.scaleLinear().domain([18, 55]).range([0, width]);
-        const y = d3.scaleLinear().domain([1900, 2300]).range([height, 0]);
-        const r = d3.scaleSqrt().domain([1, 15000]).range([8, 90]);
-        const color = d3.scaleOrdinal().domain(["Africa", "Americas", "Asia", "Europe", "Oceania"]).range(d3.schemeTableau10);
+        const x = d3.scaleLinear()
+            .domain([18, 55])
+            .range([0, width]);
 
+        const y = d3.scaleLinear()
+            .domain([1850, 2300])
+            .range([height, 0]);
 
-        svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(10));
-        svg.append("g").call(d3.axisLeft(y).ticks(5));
+        const r = d3.scaleSqrt()
+            .domain([1, 15000])
+            .range([8, 90]);
 
-        svg.append("text").attr("x", width).attr("y", height + 40).attr("text-anchor", "end").style("font-size", "11px").style("fill", "#666").text("Average Age →");
-        svg.append("text").attr("transform", "rotate(-90)").attr("y", -45).attr("text-anchor", "end").style("font-size", "11px").style("fill", "#666").text("↑ Average Strength (ELO)");
+        const color = d3.scaleOrdinal()
+            .domain(["Africa", "Americas", "Asia", "Europe", "Oceania"])
+            .range(d3.schemeTableau10);
+
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x).ticks(10));
+
+        svg.append("g")
+            .call(d3.axisLeft(y).ticks(5));
+
+        svg.append("text")
+            .attr("x", width)
+            .attr("y", height + 40)
+            .attr("text-anchor", "end")
+            .style("font-size", "11px")
+            .style("fill", "#666")
+            .text("Average Age →");
+
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -45)
+            .attr("text-anchor", "end")
+            .style("font-size", "11px")
+            .style("fill", "#666")
+            .text("↑ Average Strength (ELO)");
+
 
         Promise.all([
             d3.tsv('../data/ratings-high-elo.tsv'),
@@ -267,21 +298,35 @@
             const iso = d3.index(resIso, d => d.alpha3 || d['#alpha3']);
 
             const legend = d3.select("#legend");
+
             color.domain().forEach(reg => {
-                const item = legend.append("div").attr("class", "legend-item")
+                const item = legend.append("div")
+                    .attr("class", "legend-item")
                     .on("click", function () {
                         currentRegion = (currentRegion === reg) ? null : reg;
+
                         d3.selectAll(".legend-item").classed("inactive", d => currentRegion && currentRegion !== reg);
                         d3.selectAll(".swatch").classed("active", false);
                         if (currentRegion) d3.select(this).select(".swatch").classed("active", true);
+
                         update(Math.round(slider.noUiSlider.get()));
                     });
-                item.append("div").attr("class", "swatch").style("background", color(reg));
-                item.append("span").text(reg);
+
+                item.append("div")
+                    .attr("class", "swatch")
+                    .style("background", color(reg));
+
+                item.append("span")
+                    .text(reg);
             });
 
             const slider = document.getElementById('yearSlider');
-            noUiSlider.create(slider, { start: 2024, step: 1, range: { min: 2015, max: 2024 }, connect: [true, false] });
+            noUiSlider.create(slider, {
+                start: 2024,
+                step: 1,
+                range: { min: 2015, max: 2024 },
+                connect: [true, false]
+            });
 
             slider.noUiSlider.on('slide', v => update(Math.round(v[0])));
 
@@ -297,6 +342,7 @@
                 const data = d3.groups(resPlayers, d => d.fed).map(([fed, members]) => {
                     const c = countries.get(fed);
                     if (!c) return null;
+
                     const reg = iso.get(c.alpha3)?.region || "Other";
 
                     const validMembers = members.filter(m => {
@@ -322,10 +368,15 @@
                     };
                 }).filter(d => d);
 
-                const groups = svg.selectAll(".node").data(data, d => d.country);
+                const groups = svg.selectAll(".node")
+                    .data(data, d => d.country);
+
                 groups.exit().remove();
 
-                const enter = groups.enter().append("g").attr("class", "node");
+                const enter = groups.enter()
+                    .append("g")
+                    .attr("class", "node");
+
                 enter.append("circle");
                 enter.append("text").attr("class", "bubble-label");
 
@@ -333,7 +384,9 @@
 
                 all.select("circle")
                     .transition().duration(400)
-                    .attr("cx", d => x(d.age)).attr("cy", d => y(d.rating)).attr("r", d => r(d.pop))
+                    .attr("cx", d => x(d.age))
+                    .attr("cy", d => y(d.rating))
+                    .attr("r", d => r(d.pop))
                     .attr("fill", d => color(d.region))
                     .style("fill-opacity", d => {
                         if (searchQuery || currentRegion) {
@@ -344,13 +397,13 @@
                         return 0.6;
                     });
 
-
                 all.select("text")
                     .transition().duration(400)
-                    .attr("x", d => x(d.age)).attr("y", d => y(d.rating))
+                    .attr("x", d => x(d.age))
+                    .attr("y", d => y(d.rating))
                     .text(d => {
                         const isSearchMatch = searchQuery && d.country.toLowerCase().includes(searchQuery);
-                        if (currentRegion && d.region === currentRegion) return d.country; // Regione attiva mostra tutto
+                        if (currentRegion && d.region === currentRegion) return d.country;
                         const isTopNation = d.pop > 800;
                         return (isSearchMatch || isTopNation) ? d.country : "";
                     })
@@ -377,29 +430,30 @@
                         .style("fill-opacity", 1);
 
                     d3.select("#bgLabel").text(d.country);
+                })
+                    .on("mouseleave", (e, d) => {
+                        d3.select("#bgLabel").text("");
+                        const group = d3.select(e.currentTarget);
 
-                }).on("mouseleave", (e, d) => {
-                    d3.select("#bgLabel").text("");
-                    const group = d3.select(e.currentTarget);
+                        const matchesSearch = searchQuery === "" || d.country.toLowerCase().includes(searchQuery);
+                        const matchesRegion = currentRegion === null || d.region === currentRegion;
+                        const targetOpacity = (searchQuery || currentRegion) ? ((matchesSearch && matchesRegion) ? 0.85 : 0.05) : 0.6;
 
-                    const matchesSearch = searchQuery === "" || d.country.toLowerCase().includes(searchQuery);
-                    const matchesRegion = currentRegion === null || d.region === currentRegion;
-                    const targetOpacity = (searchQuery || currentRegion) ? ((matchesSearch && matchesRegion) ? 0.85 : 0.05) : 0.6;
+                        group.select("circle")
+                            .style("fill-opacity", targetOpacity)
+                            .style("stroke", "#fff")
+                            .style("stroke-width", "0.5px");
 
-                    group.select("circle")
-                        .style("fill-opacity", targetOpacity)
-                        .style("stroke", "#fff")
-                        .style("stroke-width", "0.5px");
-                    const isSearchMatch = searchQuery && d.country.toLowerCase().includes(searchQuery);
-                    const isRegionMatch = currentRegion && d.region === currentRegion;
-                    const isTopNation = d.pop > 800;
-                    const shouldShow = isSearchMatch || (currentRegion ? isRegionMatch : isTopNation);
+                        const isSearchMatch = searchQuery && d.country.toLowerCase().includes(searchQuery);
+                        const isTopNation = d.pop > 800;
+                        const shouldShow = isSearchMatch || (currentRegion ? (d.region === currentRegion) : isTopNation);
 
-                    group.select("text")
-                        .text(shouldShow ? d.country : "")
-                        .style("fill-opacity", (matchesSearch && matchesRegion) ? 1 : 0);
-                });
+                        group.select("text")
+                            .text(shouldShow ? d.country : "")
+                            .style("fill-opacity", (matchesSearch && matchesRegion) ? 1 : 0);
+                    });
             }
+
             update(2024);
         });
     </script>
