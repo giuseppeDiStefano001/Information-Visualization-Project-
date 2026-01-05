@@ -34,7 +34,7 @@ The code is configured to load data from a sibling folder named `data` (using th
 │   ├── countries.tsv
 │   └── iso3.tsv
 │
-└── viz/                       # Folder containing your HTML files
+└── viz/                       # Folder containing HTML files
     ├── 1_FIDE_ChessDemographics.html
     └── 2_FIDE_GenerationalClash.html
 ```
