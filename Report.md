@@ -1,4 +1,8 @@
-# Report
+# Report 
+    Author: DI STEFANO GIUSEPPE 
+    Project: INFO/VIS - 2025/26 
+    Date: 12/01/2026
+
 
 ## 1. Demographic Composition Analysis
 
@@ -24,6 +28,7 @@ This is done to smooth the user experience; instead of requiring two distinct in
 * **Reset Button:** I decided to add a reset button to make the user return easily to the full view of the 6-100 years.
 
 ---
+<div style="page-break-after: always;"></div>
 
 ## 2. Generational Clash (Strength vs. Age)
 
