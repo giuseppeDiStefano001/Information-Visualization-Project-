@@ -22,7 +22,8 @@ This project relies on the following external libraries:
 
 ## Project Structure
 
-The code is configured to load data from a sibling folder named `data` (using the path `../data/filename.tsv`). Please ensure your folder structure looks exactly like this:
+The code is configured to load data from a sibling folder named `data` (using the path `../data/filename.tsv`).
+To run the code on your device, please ensure that the folder structure of the project looks exactly like this:
 
 ```text
 /my-chess-project

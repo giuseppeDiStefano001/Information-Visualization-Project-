@@ -19,7 +19,8 @@ The implementation adheres strictly to the core visual mapping defined in the de
 
 ### Deviations from the Design
 
-* **Automatic Granularity:** In addition to the design's "Age range click" (where clicking a bar would trigger a zoom-in to reveal granular distribution), I decided to add code that automatically detects the range width. If the range is smaller than 25 years, it switches the visualization to "Macro" buckets. This is done to smooth the user experience; instead of requiring two distinct interaction modes, the slider handles both filtering and granularity, reducing the user's cognitive load.
+* **Automatic Granularity:** In addition to the design's "Age range click", where clicking a bar would trigger a zoom-in to reveal granular distribution, I decided to add code that automatically detects the range width. If the range is smaller than 25 years, it switches the visualization to "Macro" buckets. 
+This is done to smooth the user experience; instead of requiring two distinct interaction modes, the slider handles both filtering and granularity, reducing the user's cognitive load.
 * **Reset Button:** I decided to add a reset button to make the user return easily to the full view of the 6-100 years.
 
 ---
